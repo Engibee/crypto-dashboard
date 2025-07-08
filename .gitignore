@@ -1,0 +1,47 @@
+# === FRONT-END (Vue.js) ===
+node_modules/
+dist/
+.env.local
+.env.development.local
+.env.production.local
+
+# === BACK-END (Python) ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+*.log
+*.env
+venv/
+env/
+ENV/
+.Python
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.cache/
+.DS_Store
+
+# === Geral ===
+*.swp
+*.bak
+*.tmp
+*.old
+.idea/
+.vscode/
+*.iml
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel / Render / outros
+.vercel/
+.render/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
