@@ -1,5 +1,6 @@
 fastapi
 uvicorn
 pandas
+python-binance
 numpy
 python-dotenv
