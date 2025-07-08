@@ -10,7 +10,7 @@ watch(selectedCoin, (newSymbol) => {
 });
 
 async function fetchData(symbol) {
-  const response = await fetch(`http://localhost:8000/api/data/${symbol}USDT?days=90`);
+  const response = await fetch(`https://crypto-dashboard-975o.onrender.com/api/data/${symbol}USDT?days=90`);
   const json = await response.json();
   data.value = json;
 }
