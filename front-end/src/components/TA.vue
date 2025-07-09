@@ -14,7 +14,7 @@ async function connectWebSocket(symbol) {
     socket.close(); // Fecha conexão anterior se houver
   }
 
-  socket = new WebSocket(`ws://https://crypto-dashboard-975o.onrender.com/ws/data?ticker=${symbol}USDT&days=90`);
+  socket = new WebSocket(`wss://https://crypto-dashboard-975o.onrender.com/ws/data?ticker=${symbol}USDT&days=90`);
 
   socket.onopen = () => {
     console.log("Conectado via WebSocket");
