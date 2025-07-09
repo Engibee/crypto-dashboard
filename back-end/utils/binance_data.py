@@ -35,6 +35,6 @@ def api_to_df(symbol, days: int | None = None):
     print(df.tail())
 
     # OU salvar como CSV local
-    df.to_csv("data/BTCUSDT.csv", index=False)
+    #df.to_csv("data/BTCUSDT.csv", index=False)
 
     return df
