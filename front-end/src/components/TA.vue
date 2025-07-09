@@ -3,25 +3,39 @@ import { ref, onMounted, watch } from 'vue';
 
 const data = ref([]);
 const selectedCoin = ref('BTC');
-let intervalId = null;
+let socket = null;
 
 watch(selectedCoin, (newSymbol) => {
-  fetchData(newSymbol);
+  connectWebSocket(newSymbol);
 });
 
-async function fetchData(symbol) {
-  const response = await fetch(`https://crypto-dashboard-975o.onrender.com/api/data/${symbol}USDT?days=90`);
-  const json = await response.json();
-  data.value = json;
+async function connectWebSocket(symbol) {
+  if (socket) {
+    socket.close(); // Fecha conexão anterior se houver
+  }
+
+  socket = new WebSocket(`ws://https://crypto-dashboard-975o.onrender.com/ws/data?ticker=${symbol}USDT&days=90`);
+
+  socket.onopen = () => {
+    console.log("Conectado via WebSocket");
+  };
+
+  socket.onmessage = (event) => {
+    const json = JSON.parse(event.data);
+    data.value = json;
+  };
+
+  socket.onerror = (error) => {
+    console.error("Erro no WebSocket:", error);
+  };
+
+  socket.onclose = () => {
+    console.log("WebSocket fechado");
+  };
 }
 
 onMounted(async () => {
-  await fetchData(selectedCoin.value);
-
-  intervalId = setInterval(() => {
-    fetchData(selectedCoin.value);
-  }, 1000);
-
+  await connectWebSocket(selectedCoin.value);
 });
 </script>
 

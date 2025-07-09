@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
-from utils.binance_data import api_to_df
 from services.technical_analysis import calculate_indicators
+
 router = APIRouter()
 
 @router.get("/data/{symbol}")

@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
+from websocket import websocket_endpoint
 from routes.binance_data import router as binance_router
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -11,5 +12,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.websocket("/ws/data")
+async def ws_data(websocket: WebSocket):
+    await websocket_endpoint(websocket)
 
 app.include_router(binance_router, prefix="/api")
