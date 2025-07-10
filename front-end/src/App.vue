@@ -1,9 +1,23 @@
 <script setup>
-import TechnicalAnalysis from './components/TA.vue'
+import TechnicalAnalysis from "./components/TA.vue";
+import { SymbolStore } from "./stores/symbolStore";
+import { ref } from 'vue'
+
+const selectedSymbol = ref('BTC')
+
+function onSymbolChange() {
+  SymbolStore.value = selectedSymbol.value
+}
 </script>
 
 <template>
-  <div class="sidebar"><button class="technical analysis">Technical Analysis</button></div>
+  <div class="sidebar">
+    <select @change="onSymbolChange" v-model="selectedSymbol">
+      <option value="BTC">Bitcoin</option>
+      <option value="ETH">Ethereum</option>
+    </select>
+    <button class="technical analysis">Technical Analysis</button>
+  </div>
   <div class="content"><TechnicalAnalysis></TechnicalAnalysis></div>
 </template>
 

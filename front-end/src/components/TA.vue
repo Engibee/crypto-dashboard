@@ -1,13 +1,13 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
+import { SymbolStore } from "../stores/symbolStore";
 
 const data = ref([]);
-const selectedCoin = ref("BTC");
 let socket = null;
 
-watch(selectedCoin, (newSymbol) => {
-  connectWebSocket(newSymbol);
-});
+watch(SymbolStore, (newSymbol) => {
+  connectWebSocket(newSymbol)
+}, { immediate: true })
 
 async function connectWebSocket(symbol) {
   if (socket) {
@@ -41,16 +41,12 @@ async function connectWebSocket(symbol) {
 }
 
 onMounted(async () => {
-  await connectWebSocket(selectedCoin.value);
+  await connectWebSocket(SymbolStore.value);
 });
 </script>
 
 <template>
   <div class="main">
-    <select v-model="selectedCoin">
-      <option value="BTC">Bitcoin</option>
-      <option value="ETH">Ethereum</option>
-    </select>
     <div v-if="data.length > 90">
       <p>Timestamp: {{ data[90]["timestamp"] }}</p>
       <p>Simple Moving Average: {{ data[90]["SMA"] }}</p>
