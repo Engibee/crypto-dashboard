@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch } from "vue";
 
 const data = ref([]);
-const selectedCoin = ref('BTC');
+const selectedCoin = ref("BTC");
 let socket = null;
 
 watch(selectedCoin, (newSymbol) => {
@@ -11,10 +11,16 @@ watch(selectedCoin, (newSymbol) => {
 
 async function connectWebSocket(symbol) {
   if (socket) {
-    socket.close(); // Fecha conexão anterior se houver
+    socket.close();
   }
 
-  socket = new WebSocket(`wss://crypto-dashboard-975o.onrender.com/ws/data?ticker=${symbol}USDT&days=90`);
+  socket = new WebSocket(
+    `wss://crypto-dashboard-975o.onrender.com/ws/data?ticker=${symbol}USDT&days=90`
+  );
+
+  while (socket.readyState !== 1) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
 
   socket.onopen = () => {
     console.log("Conectado via WebSocket");
@@ -46,13 +52,13 @@ onMounted(async () => {
       <option value="ETH">Ethereum</option>
     </select>
     <div v-if="data.length > 90">
-      <p>Timestamp: {{ data[90]['timestamp'] }}</p>
-      <p>Simple Moving Average: {{ data[90]['SMA'] }}</p>
-      <p>Exponential Moving Average: {{ data[90]['EMA'] }}</p>
-      <p>Relative Strength Index: {{ data[90]['RSI'] }}</p>
-      <p>Moving Average Convergence Divergence: {{ data[90]['MACD'] }}</p>
-      <p>MACD Signal: {{ data[90]['MACD_Signal'] }}</p>
-      <p>Signal: {{ data[90]['Signal'] }}</p>
+      <p>Timestamp: {{ data[90]["timestamp"] }}</p>
+      <p>Simple Moving Average: {{ data[90]["SMA"] }}</p>
+      <p>Exponential Moving Average: {{ data[90]["EMA"] }}</p>
+      <p>Relative Strength Index: {{ data[90]["RSI"] }}</p>
+      <p>Moving Average Convergence Divergence: {{ data[90]["MACD"] }}</p>
+      <p>MACD Signal: {{ data[90]["MACD_Signal"] }}</p>
+      <p>Signal: {{ data[90]["Signal"] }}</p>
     </div>
     <div v-else>
       <p>Loading data...</p>
@@ -63,13 +69,13 @@ onMounted(async () => {
 <style scoped>
 .main {
   display: flex;
-  flex-direction:column;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background-color: #000;
-  color: #00FF00;
+  color: #00ff00;
   height: 100vh;
   width: 85vw;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: "Courier New", Courier, monospace;
 }
 </style>
