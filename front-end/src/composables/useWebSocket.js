@@ -11,12 +11,13 @@ export function useWebSocket(baseUrl) {
   let connectionAttempts = 0;
   const MAX_ATTEMPTS = 3;
   let currentSymbol = null;
+  let reconnectTimeout = null;
 
   async function connect(symbol, options = { days: 90 }) {
-    // Evitar múltiplas tentativas simultâneas
+    // Avoid multiple simultaneous connection attempts
     if (isConnecting) return;
     
-    // Se já estamos conectados ao mesmo símbolo, não reconectar
+    // If already connected to the same symbol, don't reconnect
     if (isConnected.value && symbol === currentSymbol) {
       return;
     }
@@ -28,90 +29,96 @@ export function useWebSocket(baseUrl) {
       connectionAttempts++;
       currentSymbol = symbol;
       
-      // Fechar conexão existente
+      // Close existing connection
       if (socket) {
         socket.close();
         socket = null;
       }
       
-      console.log(`Tentativa ${connectionAttempts}: Conectando ao WebSocket para ${symbol}USDT...`);
+      console.log(`Attempt ${connectionAttempts}: Connecting to WebSocket for ${symbol}USDT...`);
       
-      // Criar nova conexão WebSocket
+      // Create new WebSocket connection
       const url = `${baseUrl}?ticker=${symbol}USDT&days=${options.days}`;
       socket = new WebSocket(url);
 
-      // Configurar handlers de eventos
+      // Configure event handlers
       socket.onopen = () => {
-        console.log("Conexão WebSocket estabelecida com sucesso!");
+        console.log("WebSocket connection established successfully!");
         isConnecting = false;
         isConnected.value = true;
         
-        // Não desativar isLoading aqui - esperar pelos dados
-        connectionAttempts = 0; // Resetar contagem após sucesso
+        // Don't disable isLoading here - wait for data
+        connectionAttempts = 0; // Reset counter after success
       };
 
       socket.onmessage = (event) => {
         try {
           const json = JSON.parse(event.data);
           
-          // Verificar se os dados são válidos
+          // Check if data is valid
           if (Array.isArray(json) && json.length > 0) {
-            console.log(`Recebidos ${json.length} registros de dados via WebSocket`);
+            console.log(`Received ${json.length} data records via WebSocket`);
             data.value = json;
-            isLoading.value = false; // Só desativar loading quando dados chegarem
+            isLoading.value = false; // Only disable loading when data arrives
           } else {
-            console.warn("Recebidos dados WebSocket em formato inesperado:", json);
+            console.warn("Received unexpected WebSocket data format:", json);
           }
         } catch (parseError) {
-          console.error("Erro ao analisar dados do WebSocket:", parseError);
+          console.error("Error parsing WebSocket data:", parseError);
           error.value = parseError;
         }
       };
 
       socket.onerror = (err) => {
-        console.error("Erro no WebSocket:", err);
-        error.value = new Error("Erro na conexão WebSocket");
+        console.error("WebSocket error:", err);
+        error.value = new Error("WebSocket connection error");
         
-        // Se ocorrer erro, tentar fallback
+        // If error occurs, try fallback
         if (connectionAttempts >= MAX_ATTEMPTS) {
           fallbackToREST(symbol, options);
         }
       };
 
       socket.onclose = (event) => {
-        console.log(`WebSocket fechado: ${event.code} ${event.reason}`);
+        console.log(`WebSocket closed: ${event.code} ${event.reason}`);
         isConnecting = false;
         isConnected.value = false;
         
-        // Se a conexão foi fechada inesperadamente e estamos no símbolo atual
+        // Clear any existing reconnect timeout
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+          reconnectTimeout = null;
+        }
+        
+        // If connection was closed unexpectedly and we're on the current symbol
         if (event.code !== 1000 && event.code !== 1001 && symbol === currentSymbol) {
           if (connectionAttempts < MAX_ATTEMPTS) {
-            console.log(`Tentando reconectar (${connectionAttempts}/${MAX_ATTEMPTS})...`);
-            setTimeout(() => connect(symbol, options), 1000); // Esperar 1 segundo antes de tentar novamente
+            console.log(`Attempting to reconnect (${connectionAttempts}/${MAX_ATTEMPTS})...`);
+            reconnectTimeout = setTimeout(() => connect(symbol, options), 1000); // Wait 1 second before trying again
           } else {
-            console.log("Número máximo de tentativas atingido, usando API REST como fallback");
+            console.log("Maximum number of attempts reached, using REST API as fallback");
             fallbackToREST(symbol, options);
           }
         }
       };
 
-      // Adicionar timeout para dados
+      // Add data timeout
       setTimeout(() => {
         if (isLoading.value && symbol === currentSymbol) {
-          console.log("Timeout esperando dados do WebSocket, tentando fallback REST");
+          console.log("Timeout waiting for WebSocket data, trying REST fallback");
           fallbackToREST(symbol, options);
         }
-      }, 5000); // 5 segundos de timeout para receber dados
+      }, 5000); // 5 second timeout for receiving data
     } catch (err) {
-      console.error("Falha na conexão WebSocket:", err);
+      console.error("WebSocket connection failure:", err);
       isConnecting = false;
       isLoading.value = false;
       error.value = err;
       
-      // Só tentar reconectar se ainda estivermos no mesmo símbolo
+      // Only try to reconnect if we're still on the same symbol
       if (connectionAttempts < MAX_ATTEMPTS && symbol === currentSymbol) {
-        console.log(`Tentando reconectar (${connectionAttempts}/${MAX_ATTEMPTS})...`);
-        setTimeout(() => connect(symbol, options), 1000); // Esperar 1 segundo antes de tentar novamente
+        console.log(`Attempting to reconnect (${connectionAttempts}/${MAX_ATTEMPTS})...`);
+        reconnectTimeout = setTimeout(() => connect(symbol, options), 1000); // Wait 1 second before trying again
       } else if (symbol === currentSymbol) {
         fallbackToREST(symbol, options);
       }
@@ -175,3 +182,4 @@ export function useWebSocket(baseUrl) {
     disconnect
   };
 }
+
