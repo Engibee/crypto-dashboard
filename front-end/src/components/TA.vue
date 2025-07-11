@@ -5,34 +5,57 @@ import { SymbolStore } from "../stores/symbolStore";
 const data = ref([]);
 let socket = null;
 let isConnecting = false;
+let connectionAttempts = 0;
+const MAX_ATTEMPTS = 3;
+const currentSymbol = ref(SymbolStore.value);
 
-watch(SymbolStore, (newSymbol) => {
-  if (!isConnecting) {
-    connectWebSocket(newSymbol);
-  }
-}, { immediate: true });
+// Usar um único watcher com debounce para evitar múltiplas chamadas
+watch(
+  () => SymbolStore.value,
+  (newSymbol) => {
+    if (newSymbol !== currentSymbol.value) {
+      console.log(`Símbolo alterado de ${currentSymbol.value} para ${newSymbol}`);
+      currentSymbol.value = newSymbol;
+      connectionAttempts = 0;
+      
+      // Cancelar qualquer tentativa de conexão pendente
+      isConnecting = false;
+      
+      // Fechar conexão existente
+      if (socket) {
+        socket.close();
+        socket = null;
+      }
+      
+      // Iniciar nova conexão após um pequeno delay
+      setTimeout(() => {
+        connectWebSocket(newSymbol);
+      }, 100);
+    }
+  },
+  { immediate: true }
+);
 
 async function connectWebSocket(symbol) {
+  // Evitar múltiplas tentativas simultâneas
+  if (isConnecting) return;
+  
   try {
     isConnecting = true;
+    connectionAttempts++;
     
-    // Close existing connection if any
-    if (socket) {
-      socket.close();
-      socket = null;
-    }
-
-    console.log(`Connecting to WebSocket for ${symbol}USDT...`);
+    console.log(`Tentativa ${connectionAttempts}: Conectando ao WebSocket para ${symbol}USDT...`);
     
-    // Create new WebSocket connection
+    // Criar nova conexão WebSocket
     socket = new WebSocket(
       `wss://crypto-dashboard-975o.onrender.com/ws/data?ticker=${symbol}USDT&days=90`
     );
 
-    // Set up event handlers
+    // Configurar handlers de eventos
     socket.onopen = () => {
-      console.log("WebSocket connection established successfully");
+      console.log("Conexão WebSocket estabelecida com sucesso!");
       isConnecting = false;
+      connectionAttempts = 0; // Resetar contagem após sucesso
     };
 
     socket.onmessage = (event) => {
@@ -40,30 +63,36 @@ async function connectWebSocket(symbol) {
         const json = JSON.parse(event.data);
         data.value = json;
       } catch (parseError) {
-        console.error("Error parsing WebSocket data:", parseError);
+        console.error("Erro ao analisar dados do WebSocket:", parseError);
       }
     };
 
     socket.onerror = (error) => {
-      console.error("WebSocket error:", error);
+      console.error("Erro no WebSocket:", error);
     };
 
     socket.onclose = (event) => {
-      console.log(`WebSocket closed: ${event.code} ${event.reason}`);
+      console.log(`WebSocket fechado: ${event.code} ${event.reason}`);
       isConnecting = false;
       
-      // If connection was closed unexpectedly and not during component cleanup
-      if (event.code !== 1000 && event.code !== 1001) {
-        fallbackToREST(symbol);
+      // Se a conexão foi fechada inesperadamente e estamos no símbolo atual
+      if (event.code !== 1000 && event.code !== 1001 && symbol === currentSymbol.value) {
+        if (connectionAttempts < MAX_ATTEMPTS) {
+          console.log(`Tentando reconectar (${connectionAttempts}/${MAX_ATTEMPTS})...`);
+          setTimeout(() => connectWebSocket(symbol), 1000); // Esperar 1 segundo antes de tentar novamente
+        } else {
+          console.log("Número máximo de tentativas atingido, usando API REST como fallback");
+          fallbackToREST(symbol);
+        }
       }
     };
 
-    // Wait for connection with timeout
-    const connectionTimeout = 8000; // 8 seconds
+    // Aguardar conexão com timeout
+    const connectionTimeout = 5000; // 5 segundos
     await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         if (socket && socket.readyState !== WebSocket.OPEN) {
-          reject(new Error("WebSocket connection timeout"));
+          reject(new Error("Timeout na conexão WebSocket"));
         }
       }, connectionTimeout);
 
@@ -74,32 +103,49 @@ async function connectWebSocket(symbol) {
 
       socket.addEventListener('error', () => {
         clearTimeout(timer);
-        reject(new Error("Failed to connect to WebSocket"));
+        reject(new Error("Falha ao conectar ao WebSocket"));
       });
     });
   } catch (error) {
-    console.error("WebSocket connection failed:", error);
+    console.error("Falha na conexão WebSocket:", error);
     isConnecting = false;
-    fallbackToREST(symbol);
+    
+    // Só tentar reconectar se ainda estivermos no mesmo símbolo
+    if (connectionAttempts < MAX_ATTEMPTS && symbol === currentSymbol.value) {
+      console.log(`Tentando reconectar (${connectionAttempts}/${MAX_ATTEMPTS})...`);
+      setTimeout(() => connectWebSocket(symbol), 1000); // Esperar 1 segundo antes de tentar novamente
+    } else if (symbol === currentSymbol.value) {
+      fallbackToREST(symbol);
+    }
   }
 }
 
 async function fallbackToREST(symbol) {
-  console.log("Falling back to REST API...");
+  console.log("Usando API REST como fallback...");
   try {
-    const response = await fetch(`https://crypto-dashboard-975o.onrender.com/api/data/${symbol}USDT?days=90`);
+    const response = await fetch(`https://crypto-dashboard-975o.onrender.com/api/data/${symbol}USDT?days=90`, {
+      mode: 'cors',
+      credentials: 'omit',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+    
     const json = await response.json();
     data.value = json;
   } catch (fallbackError) {
-    console.error("Fallback API request also failed:", fallbackError);
+    console.error("Requisição de fallback para API também falhou:", fallbackError);
   }
 }
 
-onMounted(async () => {
-  await connectWebSocket(SymbolStore.value);
+onMounted(() => {
+  // A conexão inicial já é tratada pelo watcher com immediate: true
 });
 
-// Clean up WebSocket connection when component is unmounted
 onUnmounted(() => {
   if (socket) {
     socket.close();
