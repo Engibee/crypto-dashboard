@@ -7,7 +7,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ou especifique seu front-end: ["http://localhost:5173"]
+    allow_origins=["http://localhost:5173/","https://crypto-dashboard-nine-kohl.vercel.app/"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

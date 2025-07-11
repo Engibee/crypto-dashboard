@@ -31,8 +31,6 @@ def api_to_df(symbol, days: int | None = None):
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit='ms')
     df["timestamp"] = df["timestamp"].dt.strftime('%Y-%m-%d %H:%M:%S')
     df[["Open", "High", "Low", "Close", "Volume"]] = df[["Open", "High", "Low", "Close", "Volume"]].astype(float)
-    # Usar direto com backtester
-    print(df.tail())
 
     # OU salvar como CSV local
     #df.to_csv("data/BTCUSDT.csv", index=False)
