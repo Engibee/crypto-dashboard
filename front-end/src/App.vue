@@ -5,7 +5,7 @@ import { SymbolStore } from "./stores/symbolStore";
 import { ref } from "vue";
 
 const selectedSymbol = ref("BTC");
-const selectedView = ref("technical-analysis");
+const selectedView = ref("ta");
 
 function onSymbolChange() {
   SymbolStore.value = selectedSymbol.value;
@@ -27,8 +27,11 @@ function onSymbolChange() {
       <button class="technical-analysis" @click="selectedView = 'ta'">Technical Analysis</button>
     </div>
   </div>
-  <div class="content"><TechnicalAnalysis v-if="selectedView === 'ta'" />
-    <Overview v-if="selectedView === 'ov'" /></div>
+  <div class="content">
+    <TechnicalAnalysis v-if="selectedView === 'ta'" />
+    <Overview v-if="selectedView === 'ov'" />
+    <RawData v-if="selectedView === 'raw'" />
+  </div>
 </template>
 
 <style scoped>
@@ -78,3 +81,5 @@ function onSymbolChange() {
   margin: 1vh 0 0 0;
 }
 </style>
+
+

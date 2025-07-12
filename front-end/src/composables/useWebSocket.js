@@ -1,6 +1,6 @@
 import { ref, onUnmounted } from 'vue';
 
-export function useWebSocket(baseUrl) {
+export function useWebSocket(baseUrl, endpoint = 'data') {
   const data = ref([]);
   const isConnected = ref(false);
   const isLoading = ref(true);
@@ -35,15 +35,16 @@ export function useWebSocket(baseUrl) {
         socket = null;
       }
       
-      console.log(`Attempt ${connectionAttempts}: Connecting to WebSocket for ${symbol}USDT...`);
+      console.log(`Attempt ${connectionAttempts}: Connecting to ${endpoint} WebSocket for ${symbol}USDT...`);
       
       // Create new WebSocket connection
-      const url = `${baseUrl}?ticker=${symbol}USDT&days=${options.days}`;
+      // Use the provided endpoint (data or raw-data)
+      const url = `${baseUrl.replace('/data', `/${endpoint}`)}?ticker=${symbol}USDT&days=${options.days}`;
       socket = new WebSocket(url);
 
       // Configure event handlers
       socket.onopen = () => {
-        console.log("WebSocket connection established successfully!");
+        console.log(`${endpoint} WebSocket connection established successfully!`);
         isConnecting = false;
         isConnected.value = true;
         
@@ -57,20 +58,20 @@ export function useWebSocket(baseUrl) {
           
           // Check if data is valid
           if (Array.isArray(json) && json.length > 0) {
-            console.log(`Received ${json.length} data records via WebSocket`);
+            console.log(`Received ${json.length} ${endpoint} records via WebSocket`);
             data.value = json;
             isLoading.value = false; // Only disable loading when data arrives
           } else {
-            console.warn("Received unexpected WebSocket data format:", json);
+            console.warn(`Received unexpected ${endpoint} WebSocket data format:`, json);
           }
         } catch (parseError) {
-          console.error("Error parsing WebSocket data:", parseError);
+          console.error(`Error parsing ${endpoint} WebSocket data:`, parseError);
           error.value = parseError;
         }
       };
 
       socket.onerror = (err) => {
-        console.error("WebSocket error:", err);
+        console.error(`${endpoint} WebSocket error:`, err);
         error.value = new Error("WebSocket connection error");
         
         // If error occurs, try fallback
@@ -80,7 +81,7 @@ export function useWebSocket(baseUrl) {
       };
 
       socket.onclose = (event) => {
-        console.log(`WebSocket closed: ${event.code} ${event.reason}`);
+        console.log(`${endpoint} WebSocket closed: ${event.code} ${event.reason}`);
         isConnecting = false;
         isConnected.value = false;
         
@@ -96,7 +97,7 @@ export function useWebSocket(baseUrl) {
             console.log(`Attempting to reconnect (${connectionAttempts}/${MAX_ATTEMPTS})...`);
             reconnectTimeout = setTimeout(() => connect(symbol, options), 1000); // Wait 1 second before trying again
           } else {
-            console.log("Maximum number of attempts reached, using REST API as fallback");
+            console.log(`Maximum number of attempts reached, using REST API as fallback for ${endpoint}`);
             fallbackToREST(symbol, options);
           }
         }
@@ -105,12 +106,12 @@ export function useWebSocket(baseUrl) {
       // Add data timeout
       setTimeout(() => {
         if (isLoading.value && symbol === currentSymbol) {
-          console.log("Timeout waiting for WebSocket data, trying REST fallback");
+          console.log(`Timeout waiting for ${endpoint} WebSocket data, trying REST fallback`);
           fallbackToREST(symbol, options);
         }
       }, 5000); // 5 second timeout for receiving data
     } catch (err) {
-      console.error("WebSocket connection failure:", err);
+      console.error(`${endpoint} WebSocket connection failure:`, err);
       isConnecting = false;
       isLoading.value = false;
       error.value = err;
@@ -126,13 +127,18 @@ export function useWebSocket(baseUrl) {
   }
 
   async function fallbackToREST(symbol, options = { days: 90 }) {
-    console.log("Usando API REST como fallback...");
+    console.log(`Using REST API as fallback for ${endpoint}...`);
     try {
       isLoading.value = true;
       error.value = null;
       
-      const apiUrl = baseUrl.replace('ws', 'api').replace('wss', 'https');
-      const response = await fetch(`${apiUrl.split('/ws')[0]}/api/data/${symbol}USDT?days=${options.days}`, {
+      // Fix URL construction for REST API fallback
+      const baseApiUrl = baseUrl.replace('wss://', 'https://').replace('ws://', 'http://').split('/ws')[0];
+      const apiUrl = `${baseApiUrl}/api/${endpoint}/${symbol}USDT?days=${options.days}`;
+      
+      console.log(`Calling REST API: ${apiUrl}`);
+      
+      const response = await fetch(apiUrl, {
         mode: 'cors',
         credentials: 'omit',
         headers: {
@@ -141,20 +147,20 @@ export function useWebSocket(baseUrl) {
       });
       
       if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status}`);
+        throw new Error(`HTTP Error: ${response.status}`);
       }
       
       const json = await response.json();
       if (Array.isArray(json) && json.length > 0) {
-        console.log(`Recebidos ${json.length} registros de dados via REST`);
+        console.log(`Received ${json.length} ${endpoint} records via REST`);
         data.value = json;
         isLoading.value = false;
       } else {
-        console.warn("Recebidos dados REST em formato inesperado:", json);
-        error.value = new Error("Formato de dados inesperado");
+        console.warn(`Received unexpected ${endpoint} REST data format:`, json);
+        error.value = new Error("Unexpected data format");
       }
     } catch (fallbackError) {
-      console.error("Requisição de fallback para API também falhou:", fallbackError);
+      console.error(`Fallback API request for ${endpoint} also failed:`, fallbackError);
       error.value = fallbackError;
       isLoading.value = false;
     }
@@ -168,7 +174,7 @@ export function useWebSocket(baseUrl) {
     }
   }
 
-  // Limpar conexão quando o componente for desmontado
+  // Clean up connection when component is unmounted
   onUnmounted(() => {
     disconnect();
   });
@@ -182,4 +188,6 @@ export function useWebSocket(baseUrl) {
     disconnect
   };
 }
+
+
 

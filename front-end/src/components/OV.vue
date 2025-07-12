@@ -1,9 +1,76 @@
 <script setup>
+import { ref, watch, onMounted } from "vue";
+import { SymbolStore } from "../stores/symbolStore";
+import { useWebSocket } from "../composables/useWebSocket";
+
+// Use the websocket composable with 'raw-data' endpoint
+const { data, isConnected, isLoading, error, connect } = useWebSocket("wss://crypto-dashboard-975o.onrender.com/ws/data", "raw-data");
+const currentSymbol = ref(SymbolStore.value);
+
+// Watch for symbol changes
+watch(
+  () => SymbolStore.value,
+  (newSymbol) => {
+    if (newSymbol !== currentSymbol.value) {
+      currentSymbol.value = newSymbol;
+      
+      // Start a new connection after a small delay
+      setTimeout(() => {
+        connect(newSymbol, { days: 0 });
+      }, 100);
+    }
+  },
+  { immediate: true }
+);
+
+onMounted(() => {
+  // Ensure initial connection is established
+  connect(currentSymbol.value, { days: 0 });
+});
 </script>
 
 <template>
     <div class="main">
-        <h1>Overview</h1>
+        <h1>Overview: {{ currentSymbol }}</h1>
+        
+        <div v-if="error" class="error-container">
+            <p class="error">Error: {{ error.message }}</p>
+        </div>
+        
+        <div v-else-if="isLoading && !data.length" class="loading-container">
+            <p>Loading raw price data...</p>
+        </div>
+        
+        <div v-else-if="data.length > 0" class="data-container">
+            <h3>Raw Price Data</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Open</th>
+                        <th>High</th>
+                        <th>Low</th>
+                        <th>Close</th>
+                        <th>Volume</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(item, index) in data.slice(0, 10)" :key="index">
+                        <td>{{ item.timestamp }}</td>
+                        <td>{{ parseFloat(item.Open).toFixed(2) }}</td>
+                        <td>{{ parseFloat(item.High).toFixed(2) }}</td>
+                        <td>{{ parseFloat(item.Low).toFixed(2) }}</td>
+                        <td>{{ parseFloat(item.Close).toFixed(2) }}</td>
+                        <td>{{ parseFloat(item.Volume).toFixed(2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="note">Showing 10 of {{ data.length }} records</p>
+        </div>
+        
+        <div v-else class="no-data-container">
+            <p>No data available</p>
+        </div>
     </div>
 </template>
 
@@ -12,11 +79,56 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   background-color: #000;
   color: #00ff00;
   height: 100vh;
   width: 85vw;
   font-family: "Courier New", Courier, monospace;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+h1 {
+  margin-bottom: 30px;
+}
+
+.error {
+  color: #ff0000;
+}
+
+.data-table {
+  width: 90%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+}
+
+.data-table th, .data-table td {
+  border: 1px solid #00ff00;
+  padding: 8px;
+  text-align: right;
+}
+
+.data-table th {
+  background-color: #003300;
+  text-align: center;
+}
+
+.data-table tr:nth-child(even) {
+  background-color: #001100;
+}
+
+.note {
+  font-size: 0.8em;
+  color: #00aa00;
+  margin-top: 10px;
+}
+
+.loading-container, .error-container, .no-data-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
 }
 </style>

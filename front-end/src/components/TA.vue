@@ -3,17 +3,18 @@ import { ref, watch, onMounted } from "vue";
 import { SymbolStore } from "../stores/symbolStore";
 import { useWebSocket } from "../composables/useWebSocket";
 
-const { data, isConnected, isLoading, error, connect } = useWebSocket("wss://crypto-dashboard-975o.onrender.com/ws/data");
+// Use the same composable with default 'data' endpoint
+const { data, isConnected, isLoading, error, connect } = useWebSocket("wss://crypto-dashboard-975o.onrender.com/ws/data", "data");
 const currentSymbol = ref(SymbolStore.value);
 
-// Observar mudanças no símbolo
+// Watch for symbol changes
 watch(
   () => SymbolStore.value,
   (newSymbol) => {
     if (newSymbol !== currentSymbol.value) {
       currentSymbol.value = newSymbol;
       
-      // Iniciar nova conexão após um pequeno delay
+      // Start a new connection after a small delay
       setTimeout(() => {
         connect(newSymbol, { days: 90 });
       }, 100);
@@ -23,6 +24,7 @@ watch(
 );
 
 onMounted(() => {
+  // Ensure initial connection is established
   connect(currentSymbol.value, { days: 90 });
 });
 </script>
@@ -30,7 +32,7 @@ onMounted(() => {
 <template>
   <div class="main">
     <div v-if="error">
-      <p class="error">Erro: {{ error.message }}</p>
+      <p class="error">Error: {{ error.message }}</p>
     </div>
     <div v-else-if="isLoading && !data.length">
       <p>Loading data...</p>
