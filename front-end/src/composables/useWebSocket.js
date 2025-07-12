@@ -167,11 +167,28 @@ export function useWebSocket(baseUrl, endpoint = 'data') {
   }
 
   function disconnect() {
-    if (socket) {
-      socket.close();
-      socket = null;
-      isConnected.value = false;
+    console.log(`Disconnecting from ${endpoint} WebSocket...`);
+    
+    // Clear any pending reconnect timeout
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
     }
+    
+    // Close the socket if it exists
+    if (socket) {
+      // Only try to close if the socket is open
+      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+        socket.close(1000, "Component unmounted");
+      }
+      socket = null;
+    }
+    
+    isConnected.value = false;
+    isConnecting = false;
+    connectionAttempts = 0;
+    
+    console.log(`Disconnected from ${endpoint} WebSocket`);
   }
 
   // Clean up connection when component is unmounted
@@ -188,6 +205,7 @@ export function useWebSocket(baseUrl, endpoint = 'data') {
     disconnect
   };
 }
+
 
 
 

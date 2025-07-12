@@ -1,10 +1,10 @@
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
 import { SymbolStore } from "../stores/symbolStore";
 import { useWebSocket } from "../composables/useWebSocket";
 
 // Use the websocket composable with 'raw-data' endpoint
-const { data, isConnected, isLoading, error, connect } = useWebSocket("wss://crypto-dashboard-975o.onrender.com/ws/data", "raw-data");
+const { data, isConnected, isLoading, error, connect, disconnect } = useWebSocket("wss://crypto-dashboard-975o.onrender.com/ws/data", "raw-data");
 const currentSymbol = ref(SymbolStore.value);
 
 // Watch for symbol changes
@@ -16,7 +16,7 @@ watch(
       
       // Start a new connection after a small delay
       setTimeout(() => {
-        connect(newSymbol, { days: 0 });
+        connect(newSymbol, { days: 90 });
       }, 100);
     }
   },
@@ -25,7 +25,13 @@ watch(
 
 onMounted(() => {
   // Ensure initial connection is established
-  connect(currentSymbol.value, { days: 0 });
+  connect(currentSymbol.value, { days: 90 });
+});
+
+// Properly disconnect when component is unmounted
+onUnmounted(() => {
+  console.log("Overview component unmounted, disconnecting WebSocket");
+  disconnect();
 });
 </script>
 
