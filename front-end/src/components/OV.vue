@@ -4,7 +4,8 @@ import { SymbolStore } from "../stores/symbolStore";
 import { useWebSocket } from "../composables/useWebSocket";
 
 // Use the websocket composable with 'raw-data' endpoint
-const { data, isConnected, isLoading, error, connect, disconnect } = useWebSocket("wss://crypto-dashboard-975o.onrender.com/ws/data", "raw-data");
+const { data, isConnected, isLoading, error, connect, disconnect } =
+  useWebSocket("wss://crypto-dashboard-975o.onrender.com/ws/data", "raw-data");
 const currentSymbol = ref(SymbolStore.value);
 
 // Watch for symbol changes
@@ -13,7 +14,7 @@ watch(
   (newSymbol) => {
     if (newSymbol !== currentSymbol.value) {
       currentSymbol.value = newSymbol;
-      
+
       // Start a new connection after a small delay
       setTimeout(() => {
         connect(newSymbol, { days: 90 });
@@ -36,48 +37,48 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="main">
-        <h1>Overview: {{ currentSymbol }}</h1>
-        
-        <div v-if="error" class="error-container">
-            <p class="error">Error: {{ error.message }}</p>
-        </div>
-        
-        <div v-else-if="isLoading && !data.length" class="loading-container">
-            <p>Loading raw price data...</p>
-        </div>
-        
-        <div v-else-if="data.length > 0" class="data-container">
-            <h3>Raw Price Data</h3>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Open</th>
-                        <th>High</th>
-                        <th>Low</th>
-                        <th>Close</th>
-                        <th>Volume</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(item, index) in data.slice(0, 10)" :key="index">
-                        <td>{{ item.timestamp }}</td>
-                        <td>{{ parseFloat(item.Open).toFixed(2) }}</td>
-                        <td>{{ parseFloat(item.High).toFixed(2) }}</td>
-                        <td>{{ parseFloat(item.Low).toFixed(2) }}</td>
-                        <td>{{ parseFloat(item.Close).toFixed(2) }}</td>
-                        <td>{{ parseFloat(item.Volume).toFixed(2) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <p class="note">Showing 10 of {{ data.length }} records</p>
-        </div>
-        
-        <div v-else class="no-data-container">
-            <p>No data available</p>
-        </div>
+  <div class="main">
+    <h1>Overview: {{ currentSymbol }}</h1>
+
+    <div v-if="error" class="error-container">
+      <p class="error">Error: {{ error.message }}</p>
     </div>
+
+    <div v-else-if="isLoading && !data.length" class="loading-container">
+      <p>Loading raw price data...</p>
+    </div>
+
+    <div v-else-if="data.length > 0" class="data-container">
+      <h3>Raw Price Data</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Open</th>
+            <th>High</th>
+            <th>Low</th>
+            <th>Close</th>
+            <th>Volume</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, index) in data.slice(0, 10)" :key="index">
+            <td>{{ item.timestamp }}</td>
+            <td>{{ parseFloat(item.Open).toFixed(2) }}</td>
+            <td>{{ parseFloat(item.High).toFixed(2) }}</td>
+            <td>{{ parseFloat(item.Low).toFixed(2) }}</td>
+            <td>{{ parseFloat(item.Close).toFixed(2) }}</td>
+            <td>{{ parseFloat(item.Volume).toFixed(2) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="note">Showing 10 of {{ data.length }} records</p>
+    </div>
+
+    <div v-else class="no-data-container">
+      <p>No data available</p>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -110,7 +111,8 @@ h1 {
   border: 1px solid #00ff00;
 }
 
-.data-table th, .data-table td {
+.data-table th,
+.data-table td {
   border: 1px solid #00ff00;
   padding: 8px;
   text-align: right;
@@ -131,7 +133,9 @@ h1 {
   margin-top: 10px;
 }
 
-.loading-container, .error-container, .no-data-container {
+.loading-container,
+.error-container,
+.no-data-container {
   display: flex;
   justify-content: center;
   align-items: center;
