@@ -1,7 +1,8 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from "vue";
-import { SymbolStore } from "../stores/symbolStore";
-import { useWebSocket } from "../composables/useWebSocket";
+import InfoTooltip from "../ui/InfoTooltip.vue";
+import { SymbolStore } from "../../stores/symbolStore";
+import { useWebSocket } from "../../composables/useWebSocket";
 
 // Use the websocket composable with 'raw-data' endpoint
 const { data, isConnected, isLoading, error, connect, disconnect } =
@@ -48,31 +49,13 @@ onUnmounted(() => {
       <p>Loading raw price data...</p>
     </div>
 
-    <div v-else-if="data.length > 0" class="data-container">
-      <h3>Raw Price Data</h3>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Open</th>
-            <th>High</th>
-            <th>Low</th>
-            <th>Close</th>
-            <th>Volume</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(item, index) in data.slice(0, 10)" :key="index">
-            <td>{{ item.timestamp }}</td>
-            <td>{{ parseFloat(item.Open).toFixed(2) }}</td>
-            <td>{{ parseFloat(item.High).toFixed(2) }}</td>
-            <td>{{ parseFloat(item.Low).toFixed(2) }}</td>
-            <td>{{ parseFloat(item.Close).toFixed(2) }}</td>
-            <td>{{ parseFloat(item.Volume).toFixed(2) }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p class="note">Showing 10 of {{ data.length }} records</p>
+    <div v-else-if="data.length >= 90" class="data-container">
+      <p>{{ data[90].timestamp }}</p>
+      <p><InfoTooltip message="The price at the beginning of the time period."/>Open: {{ parseFloat(data[90].Open).toFixed(2) }}</p>
+      <p><InfoTooltip message="The highest price reached during the time period."/>High: {{ parseFloat(data[90].High).toFixed(2) }}</p>
+      <p><InfoTooltip message="The lowest price reached during the time period."/>Low: {{ parseFloat(data[90].Low).toFixed(2) }}</p>
+      <p><InfoTooltip message="The price at the end of the time period."/>Close: {{ parseFloat(data[90].Close).toFixed(2) }}</p>
+      <p><InfoTooltip message="The total amount of the asset traded during the time period."/>Volume: {{ parseFloat(data[90].Volume).toFixed(2) }}</p>
     </div>
 
     <div v-else class="no-data-container">
@@ -83,6 +66,7 @@ onUnmounted(() => {
 
 <style scoped>
 .main {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;

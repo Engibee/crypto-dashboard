@@ -26,7 +26,6 @@ export function useWebSocket(baseUrl, endpoint = 'data') {
       isConnecting = true;
       isLoading.value = true;
       error.value = null;
-      connectionAttempts++;
       currentSymbol = symbol;
       
       // Close existing connection
@@ -73,6 +72,9 @@ export function useWebSocket(baseUrl, endpoint = 'data') {
       socket.onerror = (err) => {
         console.error(`${endpoint} WebSocket error:`, err);
         error.value = new Error("WebSocket connection error");
+        isConnecting = false;
+        connectionAttempts++;
+        
         
         // If error occurs, try fallback
         if (connectionAttempts >= MAX_ATTEMPTS) {
@@ -84,6 +86,7 @@ export function useWebSocket(baseUrl, endpoint = 'data') {
         console.log(`${endpoint} WebSocket closed: ${event.code} ${event.reason}`);
         isConnecting = false;
         isConnected.value = false;
+        connectionAttempts++;
         
         // Clear any existing reconnect timeout
         if (reconnectTimeout) {
@@ -93,13 +96,8 @@ export function useWebSocket(baseUrl, endpoint = 'data') {
         
         // If connection was closed unexpectedly and we're on the current symbol
         if (event.code !== 1000 && event.code !== 1001 && symbol === currentSymbol) {
-          if (connectionAttempts < MAX_ATTEMPTS) {
-            console.log(`Attempting to reconnect (${connectionAttempts}/${MAX_ATTEMPTS})...`);
+            console.log(`Attempting to reconnect (Attempt number: ${connectionAttempts}...)`);
             reconnectTimeout = setTimeout(() => connect(symbol, options), 1000); // Wait 1 second before trying again
-          } else {
-            console.log(`Maximum number of attempts reached, using REST API as fallback for ${endpoint}`);
-            fallbackToREST(symbol, options);
-          }
         }
       };
 
@@ -114,11 +112,12 @@ export function useWebSocket(baseUrl, endpoint = 'data') {
       console.error(`${endpoint} WebSocket connection failure:`, err);
       isConnecting = false;
       isLoading.value = false;
+      connectionAttempts++;
       error.value = err;
       
       // Only try to reconnect if we're still on the same symbol
-      if (connectionAttempts < MAX_ATTEMPTS && symbol === currentSymbol) {
-        console.log(`Attempting to reconnect (${connectionAttempts}/${MAX_ATTEMPTS})...`);
+      if (symbol === currentSymbol) {
+        console.log(`Attempting to reconnect (Attempt number: ${connectionAttempts})...`);
         reconnectTimeout = setTimeout(() => connect(symbol, options), 1000); // Wait 1 second before trying again
       } else if (symbol === currentSymbol) {
         fallbackToREST(symbol, options);

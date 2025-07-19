@@ -1,6 +1,6 @@
 <script setup>
-import TechnicalAnalysis from "./components/TA.vue";
-import Overview from "./components/OV.vue";
+import TechnicalAnalysis from "./components/views/TA.vue";
+import Overview from "./components/views/OV.vue";
 import { SymbolStore } from "./stores/symbolStore";
 import { ref } from "vue";
 
@@ -30,7 +30,6 @@ function onSymbolChange() {
   <div class="content">
     <TechnicalAnalysis v-if="selectedView === 'ta'" />
     <Overview v-if="selectedView === 'ov'" />
-    <RawData v-if="selectedView === 'raw'" />
   </div>
 </template>
 
