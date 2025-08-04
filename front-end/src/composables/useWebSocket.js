@@ -54,6 +54,7 @@ export function useWebSocket(baseUrl, endpoint = 'data') {
       socket.onmessage = (event) => {
         try {
           const json = JSON.parse(event.data);
+          console.log(json);
           
           // Check if data is valid
           if (Array.isArray(json) && json.length > 0) {

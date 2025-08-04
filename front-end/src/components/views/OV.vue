@@ -2,12 +2,37 @@
 import { ref, watch, onMounted, onUnmounted } from "vue";
 import InfoTooltip from "../ui/InfoTooltip.vue";
 import { SymbolStore } from "../../stores/symbolStore";
-import { useWebSocket } from "../../composables/useWebSocket";
+import { useLivePrice } from "../../composables/useLivePrice";
 
-// Use the websocket composable with 'raw-data' endpoint
-const { data, isConnected, isLoading, error, connect, disconnect } =
-  useWebSocket("wss://crypto-dashboard-975o.onrender.com/ws/data", "raw-data");
 const currentSymbol = ref(SymbolStore.value);
+const todayStats = ref(null);
+const isLoadingStats = ref(true);
+const statsError = ref(null);
+
+// Use live price WebSocket
+const { price: livePrice, isConnected, error: priceError, connect, disconnect } = 
+  useLivePrice("wss://crypto-dashboard-975o.onrender.com");
+
+// Fetch today's stats from REST API
+async function fetchTodayStats(symbol) {
+  try {
+    isLoadingStats.value = true;
+    statsError.value = null;
+    
+    const response = await fetch(`https://crypto-dashboard-975o.onrender.com/api/today-stats/${symbol}USDT`);
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    todayStats.value = data;
+    isLoadingStats.value = false;
+  } catch (err) {
+    console.error('Error fetching today stats:', err);
+    statsError.value = err;
+    isLoadingStats.value = false;
+  }
+}
 
 // Watch for symbol changes
 watch(
@@ -15,22 +40,20 @@ watch(
   (newSymbol) => {
     if (newSymbol !== currentSymbol.value) {
       currentSymbol.value = newSymbol;
-
-      // Start a new connection after a small delay
-      setTimeout(() => {
-        connect(newSymbol, { days: 90 });
-      }, 100);
+      
+      // Connect to live price and fetch today's stats
+      connect(newSymbol);
+      fetchTodayStats(newSymbol);
     }
   },
   { immediate: true }
 );
 
 onMounted(() => {
-  // Ensure initial connection is established
-  connect(currentSymbol.value, { days: 90 });
+  connect(currentSymbol.value);
+  fetchTodayStats(currentSymbol.value);
 });
 
-// Properly disconnect when component is unmounted
 onUnmounted(() => {
   console.log("Overview component unmounted, disconnecting WebSocket");
   disconnect();
@@ -41,25 +64,36 @@ onUnmounted(() => {
   <div class="main">
     <h1>Overview: {{ currentSymbol }}</h1>
 
-    <div v-if="error" class="error-container">
-      <p class="error">Error: {{ error.message }}</p>
+    <div v-if="priceError || statsError" class="error-container">
+      <p class="error" v-if="priceError">Price Error: {{ priceError.message }}</p>
+      <p class="error" v-if="statsError">Stats Error: {{ statsError.message }}</p>
     </div>
 
-    <div v-else-if="isLoading && !data.length" class="loading-container">
-      <p>Loading raw price data...</p>
+    <div v-else-if="isLoadingStats" class="loading-container">
+      <p>Loading market data...</p>
     </div>
 
-    <div v-else-if="data.length >= 90" class="data-container">
-      <p>{{ data[90].timestamp }}</p>
-      <p><InfoTooltip message="The price at the beginning of the time period."/>Open: {{ parseFloat(data[90].Open).toFixed(2) }}</p>
-      <p><InfoTooltip message="The highest price reached during the time period."/>High: {{ parseFloat(data[90].High).toFixed(2) }}</p>
-      <p><InfoTooltip message="The lowest price reached during the time period."/>Low: {{ parseFloat(data[90].Low).toFixed(2) }}</p>
-      <p><InfoTooltip message="The price at the end of the time period."/>Close: {{ parseFloat(data[90].Close).toFixed(2) }}</p>
-      <p><InfoTooltip message="The total amount of the asset traded during the time period."/>Volume: {{ parseFloat(data[90].Volume).toFixed(2) }}</p>
-    </div>
-
-    <div v-else class="no-data-container">
-      <p>No data available</p>
+    <div v-else-if="todayStats" class="data-container">
+      <div class="live-price">
+        <h2>Live Price</h2>
+        <p class="price-display">
+          <InfoTooltip message="Real-time price from Binance WebSocket"/>
+          ${{ livePrice.toFixed(2) }}
+          <span class="connection-status" :class="{ connected: isConnected }">
+            {{ isConnected ? '🟢' : '🔴' }}
+          </span>
+        </p>
+      </div>
+      
+      <div class="today-stats">
+        <h2>Today's Statistics</h2>
+        <p><InfoTooltip message="The price at the beginning of today's trading session"/>Open: ${{ todayStats.open.toFixed(2) }}</p>
+        <p><InfoTooltip message="The highest price reached today"/>High: ${{ todayStats.high.toFixed(2) }}</p>
+        <p><InfoTooltip message="The lowest price reached today"/>Low: ${{ todayStats.low.toFixed(2) }}</p>
+        <p><InfoTooltip message="Total trading volume for today"/>Volume: {{ todayStats.volume.toFixed(2) }}</p>
+        <p><InfoTooltip message="Price change from yesterday's close"/>Change: ${{ todayStats.price_change.toFixed(2) }} ({{ todayStats.price_change_percent.toFixed(2) }}%)</p>
+        <p class="timestamp">Last updated: {{ todayStats.timestamp }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -124,5 +158,35 @@ h1 {
   justify-content: center;
   align-items: center;
   height: 50vh;
+}
+
+.live-price {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.price-display {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.connection-status {
+  font-size: 1rem;
+  margin-left: 0.5rem;
+}
+
+.today-stats {
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.timestamp {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 1rem;
 }
 </style>

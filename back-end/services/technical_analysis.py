@@ -1,9 +1,20 @@
 import pandas as pd
 import numpy as np
 from utils.binance_data import api_to_df
+from services.live_data import price_store
 
 def calculate_indicators(ticker, days=30, sma_period=14, ema_period=14, rsi_period=14, macd_fast=12, macd_slow=26, macd_signal=9):
-    df = api_to_df(ticker, days)
+    df = api_to_df(ticker, days) #Cached
+
+    price = price_store.get(ticker.lower())
+
+    if price >= df.loc[df.index[-1], "High"]:
+        df.loc[df.index[-1], "High"] = price
+
+    if price <= df.loc[df.index[-1], "High"]:
+        df.loc[df.index[-1], "Low"] = price
+
+    df.loc[df.index[-1], "Close"] = price
 
     # SMA (Simple Moving Average)
     df["SMA"] = df["Close"].rolling(window=sma_period).mean()
@@ -32,4 +43,4 @@ def calculate_indicators(ticker, days=30, sma_period=14, ema_period=14, rsi_peri
     df["Signal"] = (df["SMA"] > df["EMA"]).astype(int)
 
     # Apenas as colunas desejadas
-    return df[["timestamp","SMA", "EMA", "RSI", "MACD", "MACD_Signal", "Signal"]].replace([np.nan, np.inf, -np.inf], None)
+    return df[["timestamp","SMA", "EMA", "RSI", "MACD", "MACD_Signal", "Signal"]].iloc[[-1]].replace([np.nan, np.inf, -np.inf], None)
