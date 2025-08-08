@@ -11,7 +11,7 @@ def calculate_indicators(ticker, days=30, sma_period=14, ema_period=14, rsi_peri
     if price >= df.loc[df.index[-1], "High"]:
         df.loc[df.index[-1], "High"] = price
 
-    if price <= df.loc[df.index[-1], "High"]:
+    if price <= df.loc[df.index[-1], "Low"]:
         df.loc[df.index[-1], "Low"] = price
 
     df.loc[df.index[-1], "Close"] = price
