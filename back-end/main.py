@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Query
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Query, Request
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from utils.binance_data import api_to_df
@@ -29,9 +29,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+ALLOWED_ORIGINS = [
+    "https://crypto-dashboard-nine-kohl.vercel.app",
+    "http://localhost:5173",
+]
+
+@app.middleware("http")
+async def block_unauthorized_origins(request: Request, call_next):
+    origin = request.headers.get("origin")
+    referer = request.headers.get("referer")
+
+    # Permite apenas se a origem OU referer forem confiáveis
+    if origin and not any(origin.startswith(o) for o in ALLOWED_ORIGINS):
+        return JSONResponse(status_code=403, content={"detail": "Access denied"})
+    if referer and not any(referer.startswith(o) for o in ALLOWED_ORIGINS):
+        return JSONResponse(status_code=403, content={"detail": "Access denied"})
+
+    return await call_next(request)
+
 @app.get("/")
 def home():
-    return {"message": "API no ar!"}
+    return {"message": "API is online!"}
 
 @app.get("/api/symbols")
 def get_available_symbols():
