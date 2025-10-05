@@ -49,7 +49,7 @@ async def block_unauthorized_origins(request: Request, call_next):
 
 @app.get("/")
 def home():
-    return {"message": "API is online!"}
+    return {"message": "API is online!"} # Aqui você pode retornar o que quiser, como uma página HTML ou um JSON com dados. Não se esqueça de atualizar o front-end para lidar com o retorno.
 
 @app.get("/api/symbols")
 def get_available_symbols():
