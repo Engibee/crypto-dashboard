@@ -3,9 +3,12 @@ import threading
 import websockets
 import json
 import time
+from datetime import datetime, timezone
 from starlette.websockets import WebSocketState
 
 price_store = {"btcusdt": 0, "ethusdt": 0, "adausdt": 0}
+volume_store = {"btcusdt": 0, "ethusdt": 0, "adausdt": 0}  # Track daily volume
+last_volume_reset = datetime.now(timezone.utc).date()  # Track when volume was last reset
 ws_task = None
 
 # Rate limiting - track last send time per connection
@@ -35,7 +38,25 @@ async def binance_ws(symbols):
             symbol = payload["s"].lower()
 
             price = float(payload["p"])  # último preço
+            quantity = float(payload["q"])  # quantidade da transação
+
             price_store[symbol] = price
+
+            # Check if we need to reset daily volume (new UTC day)
+            current_date = datetime.now(timezone.utc).date()
+            global last_volume_reset
+            if current_date > last_volume_reset:
+                # Reset all volumes for new day
+                for key in volume_store:
+                    volume_store[key] = 0
+                last_volume_reset = current_date
+                print(f"Volume reset for new day: {current_date}")
+
+            # Accumulate volume for the day
+            if symbol in volume_store:
+                volume_store[symbol] += quantity
+            else:
+                volume_store[symbol] = quantity
 
             # Clean up dead connections before sending data
             await cleanup_dead_connections()
