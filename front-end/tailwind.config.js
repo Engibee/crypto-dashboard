@@ -6,5 +6,6 @@ export default {
     extend: {},
   },
   plugins: [],
+  important: true, // Makes all Tailwind classes !important
 }
 

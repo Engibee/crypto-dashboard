@@ -45,7 +45,7 @@ onUnmounted(() => {
     <div v-else-if="isLoading && !data.length">
       <p>Loading data...</p>
     </div>
-    <div v-else-if="data.length > 0">
+    <div v-else-if="data.length > 0" class="text-center">
       <p>{{ data[0]["timestamp"] }}</p>
       <p><InfoTooltip message="The average price of the asset over a specific period of time."/>Simple Moving Average: {{ data[0]["SMA"].toFixed(2) }}</p>
       <p><InfoTooltip message="The average price of the asset over a specific period of time, but with more weight given to recent prices."/>Exponential Moving Average: {{ data[0]["EMA"].toFixed(2) }}</p>
