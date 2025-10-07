@@ -61,7 +61,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="main">
+  <div class="bg-[#000000] text-[#00ff00] flex flex-col justify-center items-center text-center w-full h-full">
     <h1>Overview: {{ currentSymbol }}</h1>
 
     <div v-if="priceError || statsError" class="error-container">
@@ -78,7 +78,7 @@ onUnmounted(() => {
         <h2>Live Price</h2>
         <p class="price-display">
           <InfoTooltip message="Real-time price from Binance WebSocket"/>
-          ${{ livePrice.toFixed(2) }}
+          ${{ livePrice.toLocaleString() }}
           <span class="connection-status" :class="{ connected: isConnected }">
             {{ isConnected ? '🟢' : '🔴' }}
           </span>
@@ -87,106 +87,13 @@ onUnmounted(() => {
       
       <div class="today-stats">
         <h2>Today's Statistics</h2>
-        <p><InfoTooltip message="The price at the beginning of today's trading session"/>Open: ${{ todayStats.open.toFixed(2) }}</p>
-        <p><InfoTooltip message="The highest price reached today"/>High: ${{ todayStats.high.toFixed(2) }}</p>
-        <p><InfoTooltip message="The lowest price reached today"/>Low: ${{ todayStats.low.toFixed(2) }}</p>
-        <p><InfoTooltip message="Total trading volume for today"/>Volume: {{ todayStats.volume.toFixed(2) }}</p>
-        <p><InfoTooltip message="Price change from yesterday's close"/>Change: ${{ todayStats.price_change.toFixed(2) }} ({{ todayStats.price_change_percent.toFixed(2) }}%)</p>
+        <p><InfoTooltip message="The price at the beginning of today's trading session"/>Open: ${{ todayStats.open.toLocaleString() }}</p>
+        <p><InfoTooltip message="The highest price reached today"/>High: ${{ todayStats.high.toLocaleString() }}</p>
+        <p><InfoTooltip message="The lowest price reached today"/>Low: ${{ todayStats.low.toLocaleString() }}</p>
+        <p><InfoTooltip message="Total trading volume for today"/>Volume: {{ todayStats.volume.toLocaleString() }}</p>
+        <p><InfoTooltip message="Price change from yesterday's close"/>Change: ${{ todayStats.price_change.toLocaleString() }} ({{ todayStats.price_change_percent.toLocaleString() }}%)</p>
         <p class="timestamp">Last updated: {{ todayStats.timestamp }}</p>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.main {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #000;
-  color: #00ff00;
-  height: 100vh;
-  width: 85vw;
-  font-family: "Courier New", Courier, monospace;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-h1 {
-  margin-bottom: 30px;
-}
-
-.error {
-  color: #ff0000;
-}
-
-.data-table {
-  width: 90%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  color: #00ff00;
-  border: 1px solid #00ff00;
-}
-
-.data-table th,
-.data-table td {
-  border: 1px solid #00ff00;
-  padding: 8px;
-  text-align: right;
-}
-
-.data-table th {
-  background-color: #003300;
-  text-align: center;
-}
-
-.data-table tr:nth-child(even) {
-  background-color: #001100;
-}
-
-.note {
-  font-size: 0.8em;
-  color: #00aa00;
-  margin-top: 10px;
-}
-
-.loading-container,
-.error-container,
-.no-data-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 50vh;
-}
-
-.live-price {
-  margin-bottom: 2rem;
-  padding: 1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-}
-
-.price-display {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.connection-status {
-  font-size: 1rem;
-  margin-left: 0.5rem;
-}
-
-.today-stats {
-  padding: 1rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-}
-
-.timestamp {
-  font-size: 0.8rem;
-  color: #666;
-  margin-top: 1rem;
-}
-</style>

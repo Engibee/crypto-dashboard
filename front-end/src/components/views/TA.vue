@@ -47,11 +47,11 @@ onUnmounted(() => {
     </div>
     <div v-else-if="data.length > 0" class="text-center">
       <p>{{ data[0]["timestamp"] }}</p>
-      <p><InfoTooltip message="The average price of the asset over a specific period of time."/>Simple Moving Average: {{ data[0]["SMA"].toFixed(2) }}</p>
-      <p><InfoTooltip message="The average price of the asset over a specific period of time, but with more weight given to recent prices."/>Exponential Moving Average: {{ data[0]["EMA"].toFixed(2) }}</p>
-      <p><InfoTooltip message="A momentum oscillator that measures the speed and change of price movements."/>Relative Strength Index: {{ data[0]["RSI"].toFixed(2) }}</p>
-      <p><InfoTooltip message="A trend-following momentum indicator that shows the relationship between two moving averages of prices."/>Moving Average Convergence Divergence: {{ data[0]["MACD"].toFixed(2) }}</p>
-      <p><InfoTooltip message="A moving average of the MACD, used to identify crossovers and divergences."/>MACD Signal: {{ data[0]["MACD_Signal"].toFixed(2) }}</p>
+      <p><InfoTooltip message="The average price of the asset over a specific period of time."/>Simple Moving Average: {{ data[0]["SMA"].toLocaleString() }}</p>
+      <p><InfoTooltip message="The average price of the asset over a specific period of time, but with more weight given to recent prices."/>Exponential Moving Average: {{ data[0]["EMA"].toLocaleString() }}</p>
+      <p><InfoTooltip message="A momentum oscillator that measures the speed and change of price movements."/>Relative Strength Index: {{ data[0]["RSI"].toLocaleString() }}</p>
+      <p><InfoTooltip message="A trend-following momentum indicator that shows the relationship between two moving averages of prices."/>Moving Average Convergence Divergence: {{ data[0]["MACD"].toLocaleString() }}</p>
+      <p><InfoTooltip message="A moving average of the MACD, used to identify crossovers and divergences."/>MACD Signal: {{ data[0]["MACD_Signal"].toLocaleString() }}</p>
       <p><InfoTooltip message="A binary signal (1 or 0) indicating whether the SMA is above the EMA (1) or below (0)." />Signal: {{ data[0]["Signal"] }}</p>
     </div>
     <div v-else>
