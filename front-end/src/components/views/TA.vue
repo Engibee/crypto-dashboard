@@ -37,10 +37,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="main">
+  <div class="bg-[#000000] text-[#00ff00] flex flex-col justify-center items-center w-full h-full">
     <h1>Technical Analysis: {{ currentSymbol }}</h1>
     <div v-if="error">
-      <p class="error">Error: {{ error.message }}</p>
+      <p class="text-[#ff0000]">Error: {{ error.message }}</p>
     </div>
     <div v-else-if="isLoading && !data.length">
       <p>Loading data...</p>
@@ -59,21 +59,3 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: #000;
-  color: #00ff00;
-  height: 100vh;
-  width: 85vw;
-  font-family: "Courier New", Courier, monospace;
-}
-
-.error {
-  color: #ff0000;
-}
-</style>

@@ -61,10 +61,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="bg-[#000000] text-[#00ff00] flex flex-col justify-center items-center text-center w-full h-full">
+  <div class="bg-[#000000] text-[#00ff00] flex flex-col justify-center items-center w-full h-full">
     <h1>Overview: {{ currentSymbol }}</h1>
 
-    <div v-if="priceError || statsError" class="error-container">
+    <div v-if="priceError || statsError" class="text-[#ff0000]">
       <p class="error" v-if="priceError">Price Error: {{ priceError.message }}</p>
       <p class="error" v-if="statsError">Stats Error: {{ statsError.message }}</p>
     </div>
@@ -73,7 +73,7 @@ onUnmounted(() => {
       <p>Loading market data...</p>
     </div>
 
-    <div v-else-if="todayStats" class="data-container">
+    <div v-else-if="todayStats" class="text-center">
       <div class="live-price">
         <h2>Live Price</h2>
         <p class="price-display">
