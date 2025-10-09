@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 from config.settings import ALLOWED_ORIGINS, API_SECRET_KEY
 
 async def block_unauthorized_origins(request: Request, call_next):
-    # Only allow health endpoint for monitoring
-    if request.url.path in ["/health"]:
+    # Allow health checks and WebSocket connections
+    if request.url.path in ["/health"] or request.scope["type"] == "websocket":
         return await call_next(request)
     
     origin = request.headers.get("origin")
@@ -14,7 +14,6 @@ async def block_unauthorized_origins(request: Request, call_next):
     
     # Block direct browser access (no origin/referer from address bar)
     if not origin and not referer:
-        # Allow if it's a legitimate API client (not a browser)
         if not any(browser in user_agent.lower() for browser in ["mozilla", "chrome", "safari", "edge", "firefox"]):
             return await call_next(request)
         return JSONResponse(status_code=403, content={"detail": "Direct browser access not allowed"})
