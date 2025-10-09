@@ -5,7 +5,7 @@ import { SymbolStore } from "../../stores/symbolStore";
 import { useWebSocket } from "../../composables/useWebSocket";
 
 // Use the same composable with default 'data' endpoint
-const { data, isConnected, isLoading, error, connect, disconnect } = useWebSocket("wss://crypto-dashboard-975o.onrender.com/ws/data", "data");
+const { data, isConnected, isLoading, error, connect, disconnect } = useWebSocket(import.meta.env.VITE_API_URL, "data");
 const currentSymbol = ref(SymbolStore.value);
 
 // Watch for symbol changes

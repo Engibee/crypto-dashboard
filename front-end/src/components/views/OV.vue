@@ -11,7 +11,7 @@ const statsError = ref(null);
 
 // Use live price WebSocket
 const { price: livePrice, isConnected, error: priceError, connect, disconnect } = 
-  useLivePrice("wss://crypto-dashboard-975o.onrender.com");
+  useLivePrice(import.meta.env.VITE_API_URL);
 
 // Fetch today's stats from REST API
 async function fetchTodayStats(symbol) {
