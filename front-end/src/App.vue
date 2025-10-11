@@ -1,6 +1,7 @@
 <script setup>
 import TechnicalAnalysis from "./components/views/TA.vue";
 import Overview from "./components/views/OV.vue";
+import Graphs from "./components/views/GR.vue";
 import { SymbolStore } from "./stores/symbolStore";
 import { ref } from "vue";
 
@@ -25,11 +26,13 @@ function onSymbolChange() {
     <div class="views">
       <button class="overview" @click="selectedView = 'ov'">Overview</button>
       <button class="technical-analysis" @click="selectedView = 'ta'">Technical Analysis</button>
+      <button class="graphs" @click="selectedView = 'gr'">Graphs</button>
     </div>
   </div>
   <div class="content">
     <TechnicalAnalysis v-if="selectedView === 'ta'" />
     <Overview v-if="selectedView === 'ov'" />
+    <Graphs v-if="selectedView === 'gr'" />
   </div>
 </template>
 
@@ -65,6 +68,13 @@ function onSymbolChange() {
 
 .button {
   width: 1%;
+}
+
+.graphs {
+  height: 7vh;
+  width: 100%;
+  border-radius: 0;
+  margin: 1vh 0 0 0;
 }
 
 .overview {

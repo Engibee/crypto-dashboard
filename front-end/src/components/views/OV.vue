@@ -19,7 +19,7 @@ async function fetchTodayStats(symbol) {
     isLoadingStats.value = true;
     statsError.value = null;
     
-    const response = await fetch(`https://crypto-dashboard-975o.onrender.com/api/today-stats/${symbol}USDT`);
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/today-stats/${symbol}USDT`);
     if (!response.ok) {
       throw new Error(`HTTP Error: ${response.status}`);
     }
