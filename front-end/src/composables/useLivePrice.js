@@ -28,6 +28,8 @@ export function useLivePrice(baseUrl) {
       console.log(`Connecting to live price WebSocket for ${symbol}...`);
       
       const url = `${baseUrl}/ws/live-price?ticker=${symbol}USDT`;
+
+      console.log(`Connecting to ${url}`);
       socket = new WebSocket(url);
 
       socket.onopen = () => {
